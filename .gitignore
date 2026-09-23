@@ -1,0 +1,41 @@
+/target
+*.pyd
+*.so
+*.exe
+*.pdb
+
+# 运行时数据
+/data/
+config.json
+*.log
+*.bak
+
+# 调试/临时产物
+*_backup.html
+*_stderr.txt
+*_stdout.txt
+test_*.html
+test_*.rs
+test_*.py
+analyze.py
+check_*.py
+check_*.js
+onebot11_*.json
+plugins_*.json
+song_data_*.json
+startup_error.txt
+
+# 编辑器
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Python
+__pycache__/
+*.egg-info/
+.venv/
+
+# 本地产物（勿提交）
+/release-binaries/
+/dist/

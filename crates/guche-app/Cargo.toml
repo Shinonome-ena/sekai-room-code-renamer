@@ -1,0 +1,21 @@
+[package]
+name = "guche-app"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "guche"
+path = "src/main.rs"
+
+[dependencies]
+guche-core = { path = "../guche-core" }
+tokio = { version = "1", features = ["net", "rt-multi-thread", "macros", "sync", "time", "signal", "fs"] }
+tokio-tungstenite = { version = "0.26", default-features = false, features = ["handshake"] }
+
+futures-util = "0.3"
+serde = { version = "1", default-features = false, features = ["derive"] }
+serde_json = { version = "1", default-features = false, features = ["std"] }
+http = { version = "1", default-features = false }
+log = { version = "0.4", default-features = false }
+axum = { version = "0.7", default-features = false, features = ["ws", "json", "query", "tokio", "http1"] }
+time = { version = "0.3", features = ["local-offset", "formatting"] }

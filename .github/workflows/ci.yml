@@ -1,0 +1,50 @@
+name: CI
+run-name: CI · ${{ github.ref_name }}
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  test:
+    name: Test (${{ matrix.name }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: windows-x64,  os: windows-latest,  bin: guche.exe, asset: guche-windows-x64.exe }
+          - { name: windows-arm64, os: windows-11-arm, bin: guche.exe, asset: guche-windows-arm64.exe }
+          - { name: linux-x64,    os: ubuntu-latest,   bin: guche,     asset: guche-linux-x64 }
+          - { name: linux-arm64,  os: ubuntu-24.04-arm, bin: guche,    asset: guche-linux-arm64 }
+          - { name: macos-arm64,  os: macos-latest,    bin: guche,     asset: guche-macos-arm64 }
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+
+      - name: Run tests
+        run: cargo test --workspace
+
+      - name: Build release
+        run: cargo build --release --bin guche
+
+      - name: Stage binary
+        shell: bash
+        run: |
+          mkdir -p dist
+          cp "target/release/${{ matrix.bin }}" "dist/${{ matrix.asset }}"
+
+      - name: Upload binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset }}
+          path: dist/${{ matrix.asset }}

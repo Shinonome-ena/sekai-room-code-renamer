@@ -1,0 +1,32 @@
+{
+  "onebot": {
+    "host": "127.0.0.1",
+    "port": 8901,
+    "token": null
+  },
+  "admin_users": [],
+  "commands": {
+    "guche_enable": "/开启固车拾取",
+    "guche_disable": "/关闭固车拾取",
+    "guche_help": "/固车拾取 使用方法",
+    "guche_mode": "/固车模式"
+  },
+  "guche": {
+    "fuzzy": false,
+    "pos_end": false,
+    "cooldown_seconds": 5.0,
+    "groups": {}
+  },
+  "stats": {
+    "max_records_per_group": 1024
+  },
+  "webui": {
+    "enabled": true,
+    "port": 8080
+  },
+  "buffers": {
+    "log_buffer_size": 1024,
+    "message_queue_size": 512,
+    "connection_pool_size": 10
+  }
+}

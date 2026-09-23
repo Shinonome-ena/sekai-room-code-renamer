@@ -1,0 +1,84 @@
+name: Release
+run-name: Release · ${{ github.ref_name }}
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    name: Build (${{ matrix.name }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: windows-x64,   os: windows-latest,   bin: guche.exe, asset: guche-windows-x64.exe }
+          - { name: windows-arm64, os: windows-11-arm,   bin: guche.exe, asset: guche-windows-arm64.exe }
+          - { name: linux-x64,     os: ubuntu-latest,    bin: guche,     asset: guche-linux-x64 }
+          - { name: linux-arm64,   os: ubuntu-24.04-arm, bin: guche,     asset: guche-linux-arm64 }
+          - { name: macos-arm64,   os: macos-latest,     bin: guche,     asset: guche-macos-arm64 }
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+
+      - name: Run tests
+        run: cargo test --workspace
+
+      - name: Build release
+        run: cargo build --release --bin guche
+
+      - name: Stage binary
+        shell: bash
+        run: |
+          mkdir -p dist
+          cp "target/release/${{ matrix.bin }}" "dist/${{ matrix.asset }}"
+
+      - name: Upload binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: bin-${{ matrix.name }}
+          path: dist/${{ matrix.asset }}
+
+  release:
+    name: Publish Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all binaries
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Stage shared files
+        run: |
+          cp config.default.json LICENSE README.md dist/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/guche-windows-x64.exe
+            dist/guche-windows-arm64.exe
+            dist/guche-linux-x64
+            dist/guche-linux-arm64
+            dist/guche-macos-arm64
+            dist/config.default.json
+            dist/LICENSE
+            dist/README.md
+          generate_release_notes: true

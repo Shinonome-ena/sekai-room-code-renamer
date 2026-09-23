@@ -1,0 +1,16 @@
+# 世界计划固车助手 · Docker Compose 示例
+# 1. 将 config.default.json 复制为 config.json 并按需修改
+# 2. OneBot V11 客户端的「WebSocket 客户端 / 反向 WS」指向: ws://<本机IP>:8901/ws
+# 3. docker compose up -d
+
+services:
+  guche:
+    image: ghcr.io/shinonome-ena/guche:latest
+    container_name: guche
+    ports:
+      - "8901:8901"   # OneBot V11 反向 WebSocket
+      - "8080:8080"   # WebUI
+    volumes:
+      - ./config.json:/app/config.json
+      - ./data:/app/data
+    restart: unless-stopped

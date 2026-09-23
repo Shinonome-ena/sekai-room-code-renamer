@@ -1,0 +1,1717 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>固车助手 - 管理后台</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { overflow: hidden; height: 100%; }
+
+        /* 使用指南按钮 - 柔和呼吸光 */
+        @keyframes guide-glow {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(196, 168, 130, 0); }
+            50% { box-shadow: 0 0 12px 2px rgba(196, 168, 130, 0.35); }
+        }
+        .btn-guide-hint {
+            animation: guide-glow 3s ease-in-out infinite;
+        }
+        .btn-guide-hint:hover {
+            animation: none;
+            box-shadow: 0 0 12px 2px rgba(196, 168, 130, 0.35);
+        }
+
+        :root {
+            --bg-primary: #faf9f7;
+            --bg-secondary: #f5f3f0;
+            --bg-card: #ffffff;
+            --text-primary: #2d2d2d;
+            --text-secondary: #666666;
+            --text-muted: #999999;
+            --border: #e8e5e0;
+            --accent: #c4a882;
+            --accent-hover: #b8956e;
+            --accent-glow: rgba(196, 168, 130, 0.15);
+            --rose: #d4a0a0;
+            --green: #8cb88c;
+            --red: #c47070;
+            --orange: #c4a060;
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 20px;
+            --shadow-sm: 0 2px 8px rgba(0,0,0,0.04);
+            --shadow-md: 0 4px 16px rgba(0,0,0,0.06);
+            --shadow-lg: 0 8px 32px rgba(0,0,0,0.08);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --header-height: 80px;
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #1a1918;
+            --bg-secondary: #242322;
+            --bg-card: #2d2c2a;
+            --text-primary: #e8e5e0;
+            --text-secondary: #a09890;
+            --text-muted: #706860;
+            --border: #3d3a36;
+            --accent: #d4b896;
+            --accent-hover: #e0c8a6;
+            --accent-glow: rgba(212, 184, 150, 0.2);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .app { display: flex; min-height: 100vh; }
+
+        .sidebar {
+            width: 220px;
+            background: var(--bg-card);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100vh;
+            z-index: 100;
+        }
+
+        .logo {
+            height: var(--header-height);
+            padding: 0 20px;
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--accent);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-icon {
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, var(--accent), var(--rose));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .logo-icon svg { width: 16px; height: 16px; fill: white; }
+
+        .nav { flex: 1; padding: 12px 8px; overflow-y: auto; }
+
+        .nav-item {
+            padding: 10px 16px;
+            margin: 2px 0;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            color: var(--text-secondary);
+            transition: var(--transition);
+        }
+
+        .nav-item:hover { background: var(--accent-glow); color: var(--text-primary); }
+        .nav-item.active { background: var(--accent-glow); color: var(--accent); font-weight: 500; }
+        .nav-item svg { width: 18px; height: 18px; fill: currentColor; opacity: 0.7; }
+        .nav-item.active svg { opacity: 1; }
+
+        .sidebar-footer {
+            padding: 16px;
+            border-top: 1px solid var(--border);
+            font-size: 11px;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        .sidebar-footer a { color: var(--accent); text-decoration: none; }
+        .sidebar-footer a:hover { text-decoration: underline; }
+
+        .main { flex: 1; margin-left: 220px; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+        .header {
+            height: var(--header-height);
+            padding: 0 32px;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .header-title { font-size: 20px; font-weight: 600; }
+
+        .status-bar { display: flex; gap: 20px; font-size: 13px; color: var(--text-secondary); }
+        .status-item { display: flex; align-items: center; gap: 6px; }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+        .header-actions { display: flex; gap: 8px; }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-primary { background: var(--accent); color: white; }
+        .btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+        .btn-secondary { background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border); }
+        .btn-secondary:hover { background: var(--border); }
+        .btn-danger { background: var(--red); color: white; }
+        .btn-danger:hover { opacity: 0.9; }
+        .btn-ghost { background: transparent; color: var(--text-secondary); }
+        .btn-ghost:hover { background: var(--accent-glow); color: var(--accent); }
+        .btn-sm { padding: 4px 10px; font-size: 12px; }
+        .btn svg { width: 14px; height: 14px; fill: currentColor; }
+
+        .content { flex: 1; padding: 24px 32px; overflow-y: auto; scrollbar-width: none; padding-bottom: 24px; }
+        .content::-webkit-scrollbar { display: none; }
+
+        .page { display: none; animation: fadeIn 0.3s ease; }
+        .page.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            margin-bottom: 16px;
+            transition: var(--transition);
+        }
+
+        .card:hover { box-shadow: var(--shadow-md); }
+
+        .card-header {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-header::before {
+            content: '';
+            width: 3px;
+            height: 14px;
+            background: var(--accent);
+            border-radius: 2px;
+        }
+
+        .metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+
+        .metric-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            transition: var(--transition);
+        }
+
+        .metric-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+        .metric-value { font-size: 32px; font-weight: 700; color: var(--accent); margin-bottom: 4px; }
+        .metric-label { font-size: 13px; color: var(--text-muted); }
+
+        .ws-box {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 12px 0;
+        }
+
+        .ws-url { font-family: 'SF Mono', 'Consolas', monospace; font-size: 14px; color: var(--accent); word-break: break-all; }
+
+        .list { list-style: none; }
+        .list-item { padding: 12px 0; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; font-size: 14px; }
+        .list-item:last-child { border-bottom: none; }
+        .list-label { color: var(--text-secondary); }
+        .list-value { font-weight: 500; }
+
+        .table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .table th { text-align: left; padding: 12px; color: var(--text-muted); font-weight: 500; border-bottom: 1px solid var(--border); }
+        .table td { padding: 12px; border-bottom: 1px solid var(--border); }
+        .table tr:last-child td { border-bottom: none; }
+
+        /* 自定义下拉菜单 - 纯div实现，跨浏览器一致 */
+        .dropdown {
+            position: relative;
+            width: 100%;
+        }
+
+        .dropdown-trigger {
+            width: 100%;
+            padding: 10px 36px 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            font-family: inherit;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            cursor: pointer;
+            outline: none;
+            transition: var(--transition);
+            position: relative;
+            user-select: none;
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            min-height: 40px;
+        }
+
+        .dropdown-trigger::after {
+            content: '';
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 0;
+            height: 0;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-top: 6px solid var(--text-muted);
+            transition: transform 0.2s ease;
+        }
+
+        .dropdown.open .dropdown-trigger {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        .dropdown.open .dropdown-trigger::after {
+            transform: translateY(-50%) rotate(180deg);
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            margin-top: 4px;
+            box-shadow: var(--shadow-md);
+            z-index: 100;
+            display: none;
+            overflow: hidden;
+        }
+
+        .dropdown.open .dropdown-menu {
+            display: block;
+        }
+
+        .dropdown-option {
+            padding: 10px 12px;
+            font-size: 14px;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: background-color 0.15s ease;
+        }
+
+        .dropdown-option:hover {
+            background-color: var(--accent-glow);
+        }
+
+        .dropdown-option.selected {
+            color: var(--accent);
+            font-weight: 500;
+        }
+
+        [data-theme="dark"] .dropdown-menu {
+            background: #2d2c2a;
+            border-color: #3d3a36;
+        }
+
+        [data-theme="dark"] .dropdown-option:hover {
+            background-color: rgba(212, 184, 150, 0.2);
+        }
+
+        .form-group { margin-bottom: 16px; }
+        .form-label { display: block; font-size: 13px; font-weight: 500; color: var(--text-secondary); margin-bottom: 6px; }
+        
+        .form-input, .form-textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            font-family: inherit;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            transition: var(--transition);
+        }
+        
+        .form-input:focus, .form-textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        .form-textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .search-box {
+            position: relative;
+            margin-bottom: 16px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 10px 12px 10px 36px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            transition: var(--transition);
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 16px;
+            height: 16px;
+            fill: var(--text-muted);
+        }
+
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+        .badge-success { background: rgba(140, 184, 140, 0.15); color: var(--green); }
+        .badge-warning { background: rgba(196, 160, 96, 0.15); color: var(--orange); }
+
+        .log-container {
+            background: #1e1d1c;
+            color: #d4d0c8;
+            padding: 16px;
+            border-radius: var(--radius-md);
+            font-family: 'SF Mono', 'Consolas', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .log-entry { margin-bottom: 2px; padding: 2px 0; }
+        .log-time { color: #8cb88c; }
+        .log-level-info { color: #8cb88c; }
+        .log-level-warn { color: #c4a060; }
+        .log-level-error { color: #c47070; }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: var(--radius-md);
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-lg);
+            font-size: 14px;
+            z-index: 1000;
+            transform: translateX(calc(100% + 40px));
+            transition: transform 0.3s ease;
+            pointer-events: none;
+        }
+
+        .toast.show { transform: translateX(0); pointer-events: auto; }
+        .toast-success { border-left: 3px solid var(--green); }
+        .toast-error { border-left: 3px solid var(--red); }
+        .toast-info { border-left: 3px solid var(--accent); }
+
+        .guide-float {
+            position: fixed;
+            top: 100px;
+            right: 20px;
+            width: 420px;
+            max-height: 70vh;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-lg);
+            z-index: 150;
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .guide-float.show { display: flex; }
+
+        .guide-header {
+            padding: 16px 20px;
+            background: var(--accent);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: move;
+            user-select: none;
+        }
+
+        .guide-header h3 { font-size: 15px; font-weight: 600; }
+
+        .guide-close {
+            width: 28px;
+            height: 28px;
+            border: none;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+
+        .guide-close:hover { background: rgba(255,255,255,0.3); }
+        .guide-close svg { width: 14px; height: 14px; fill: white; }
+
+        .guide-body {
+            padding: 20px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .guide-step {
+            margin-bottom: 16px;
+            padding: 14px;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-md);
+        }
+
+        .guide-step:last-child { margin-bottom: 0; }
+
+        .guide-step-num {
+            display: inline-block;
+            width: 22px;
+            height: 22px;
+            background: var(--accent);
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 22px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-right: 8px;
+        }
+
+        .guide-step-title { font-weight: 600; margin-bottom: 8px; font-size: 14px; }
+        .guide-step-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.8; }
+
+        .guide-code {
+            background: #1e1d1c;
+            color: #d4d0c8;
+            padding: 10px 14px;
+            border-radius: var(--radius-sm);
+            font-family: 'SF Mono', 'Consolas', monospace;
+            font-size: 12px;
+            margin: 8px 0;
+            word-break: break-all;
+        }
+
+        .footer {
+            padding: 16px 32px;
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border);
+            font-size: 12px;
+            color: var(--text-muted);
+            text-align: center;
+            line-height: 1.8;
+        }
+
+        .footer a { color: var(--accent); text-decoration: none; }
+        .footer a:hover { text-decoration: underline; }
+
+        .help-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .help-table td {
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--border);
+            vertical-align: top;
+        }
+        .help-table tr:last-child td {
+            border-bottom: none;
+        }
+        .help-cmd {
+            font-family: 'SF Mono', 'Consolas', monospace;
+            background: var(--bg-secondary);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+
+        .record-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+        .record-table th {
+            padding: 8px 12px;
+            text-align: left;
+            color: var(--text-muted);
+            font-weight: 500;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-secondary);
+        }
+        .record-table td {
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--border);
+        }
+        .record-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* 工具类 */
+        .mt-16 { margin-top: 16px; }
+        .mb-8 { margin-bottom: 8px; }
+        .mb-16 { margin-bottom: 16px; }
+        .flex-row { display: flex; gap: 8px; }
+        .flex-col { display: flex; flex-direction: column; gap: 8px; }
+        .grid-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .section-sep { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+        .empty-state { text-align: center; color: var(--text-muted); }
+        .w-full { width: 100%; }
+        .flex-1 { flex: 1; }
+        .text-muted { color: var(--text-muted); font-size: 13px; }
+
+        /* 输入框+按钮行对齐 */
+        .flex-row .form-input { flex: 1; }
+        .flex-row .btn { align-self: stretch; display: inline-flex; align-items: center; }
+
+        /* 小号下拉（群组管理页内联用） */
+        .dropdown-sm { width: auto; }
+        .dropdown-sm .dropdown-trigger { padding: 4px 28px 4px 8px; font-size: 12px; min-height: 30px; }
+
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); }
+            .main { margin-left: 0; }
+            .metrics { grid-template-columns: 1fr; }
+            .header { flex-direction: column; align-items: flex-start; gap: 12px; height: auto; padding: 16px 32px; }
+            .header-left { flex-direction: column; align-items: flex-start; gap: 8px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <aside class="sidebar">
+            <div class="logo">
+                <div class="logo-icon">
+                    <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                </div>
+                固车助手
+            </div>
+            <nav class="nav">
+                <div class="nav-item active" onclick="switchPage('overview')">
+                    <svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+                    概览
+                </div>
+                <div class="nav-item" onclick="switchPage('groups')">
+                    <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+                    群组管理
+                </div>
+                <div class="nav-item" onclick="switchPage('config')">
+                    <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+                    配置编辑
+                </div>
+                <div class="nav-item" onclick="switchPage('stats')">
+                    <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>
+                    统计详情
+                </div>
+                <div class="nav-item" onclick="switchPage('logs')">
+                    <svg viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6 10H6v-2h8v2zm4-4H6v-2h12v2z"/></svg>
+                    实时日志
+                </div>
+                <div class="nav-item" onclick="switchPage('help')">
+                    <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/></svg>
+                    帮助信息
+                </div>
+            </nav>
+            <div class="sidebar-footer">
+                <div>世界计划固车助手 Sekai Guche Assistant v0.1.0</div>
+                <div>作者: <a href="https://github.com/Shinonome-ena" target="_blank">Shinonome-ena</a></div>
+                <div style="margin-top: 8px; font-size: 10px; line-height: 1.4;">
+                    本程序仅供学习交流，开发者不收取任何费用，请勿上当受骗。如涉及侵权，请在 GitHub 联系删除。
+                </div>
+                <div style="margin-top: 6px; font-size: 10px; line-height: 1.4;">
+                    请勿用于非法用途。使用本程序部署 Bot 可能违反相关社交平台的用户协议，由此产生的封号等风险由使用者自行承担。
+                </div>
+            </div>
+        </aside>
+
+        <main class="main">
+            <header class="header">
+                <div class="header-left">
+                    <h1 class="header-title" id="page-title">概览</h1>
+                    <div class="status-bar">
+                        <div class="status-item"><span class="status-dot"></span><span id="ws-status">已连接</span></div>
+                        <div class="status-item">启用群组: <strong id="groups-count">0</strong></div>
+                        <div class="status-item">今日改名: <strong id="today-count">0</strong></div>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-ghost btn-guide-hint" onclick="toggleGuide()">
+                        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/></svg>
+                        使用指南
+                    </button>
+                    <button class="btn btn-secondary" onclick="refreshAll()">刷新</button>
+                    <button class="btn btn-ghost" onclick="toggleTheme()" title="切换深色/浅色模式">
+                        <svg viewBox="0 0 24 24"><path d="M9.37 5.51c-.18.64-.27 1.31-.27 1.99 0 4.08 3.32 7.4 7.4 7.4.68 0 1.35-.09 1.99-.27C17.45 17.19 14.93 19 12 19c-3.86 0-7-3.14-7-7 0-2.93 1.81-5.45 4.37-6.49zM12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/></svg>
+                    </button>
+                </div>
+            </header>
+
+            <div class="content">
+                <!-- 概览页 -->
+                <div id="page-overview" class="page active">
+                    <div class="metrics">
+                        <div class="metric-card">
+                            <div class="metric-value" id="metric-status">正常</div>
+                            <div class="metric-label">运行状态</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value" id="metric-groups">0</div>
+                            <div class="metric-label">启用群组</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value" id="metric-today">0</div>
+                            <div class="metric-label">今日改名</div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">OneBot 连接地址</div>
+                        <p class="text-muted" style="margin-bottom: 12px;">
+                            请在 OneBot V11 客户端中添加以下反向 WebSocket 连接
+                        </p>
+                        <div class="ws-box">
+                            <span class="ws-url" id="ws-url">加载中...</span>
+                            <button class="btn btn-primary" onclick="copyWsUrl()">复制</button>
+                        </div>
+                    </div>
+
+                    <div class="grid-2col">
+                        <div class="card">
+                            <div class="card-header">当前配置</div>
+                            <ul class="list">
+                                <li class="list-item"><span class="list-label">匹配模式</span><span class="list-value" id="cfg-mode">-</span></li>
+                                <li class="list-item"><span class="list-label">车牌位置</span><span class="list-value" id="cfg-pos">-</span></li>
+                                <li class="list-item"><span class="list-label">冷却时间</span><span class="list-value" id="cfg-cooldown">-</span></li>
+                            </ul>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">快捷操作</div>
+                            <div class="flex-col">
+                                <button class="btn btn-primary" onclick="switchPage('config')">编辑配置</button>
+                                <button class="btn btn-secondary" onclick="switchPage('groups')">管理群组</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 群组管理页 -->
+                <div id="page-groups" class="page">
+                    <div class="card">
+                        <div class="card-header">启用群组列表</div>
+                        <div class="search-box">
+                            <svg class="search-icon" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+                            <input type="text" class="search-input" id="group-search" placeholder="搜索群组ID..." oninput="filterGroups()">
+                        </div>
+                        <div id="group-list"></div>
+                        <div class="section-sep">
+                            <div class="flex-row">
+                                <input type="number" class="form-input" id="new-group-id" placeholder="输入群组ID">
+                                <button class="btn btn-primary" onclick="addGroup()">添加</button>
+                                <button class="btn btn-secondary" onclick="syncGroupNames()" title="通过 OneBot 拉取群名">同步群名</button>
+                            </div>
+                        </div>
+                        <div class="section-sep flex-row">
+                            <button class="btn btn-secondary" onclick="resetAllGroupOverrides()">全部恢复默认配置</button>
+                            <span id="global-settings-display" style="margin-left: 16px; color: #666; font-size: 14px; display: flex; align-items: center;"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 配置编辑页 -->
+                <div id="page-config" class="page">
+                    <div class="grid-2col">
+                        <div class="card">
+                            <div class="card-header">固车配置</div>
+                            <form id="form-guche">
+                                <div class="form-group">
+                                    <label class="form-label">匹配模式</label>
+                                    <div class="dropdown" id="dd-match-mode" data-value="strict">
+                                        <div class="dropdown-trigger" onclick="toggleDropdown(this)">严格模式（纯5位数字）</div>
+                                        <div class="dropdown-menu">
+                                            <div class="dropdown-option selected" data-value="false" onclick="selectOption(this); saveGucheField('fuzzy', false)">严格模式（纯5位数字）</div>
+                                            <div class="dropdown-option" data-value="true" onclick="selectOption(this); saveGucheField('fuzzy', true)">宽松模式（开头5位数字）</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">车牌位置</label>
+                                    <div class="dropdown" id="dd-group-pos" data-value="start">
+                                        <div class="dropdown-trigger" onclick="toggleDropdown(this)">前缀（车牌在群名前）</div>
+                                        <div class="dropdown-menu">
+                                            <div class="dropdown-option selected" data-value="false" onclick="selectOption(this); saveGucheField('pos_end', false)">前缀（车牌在群名前）</div>
+                                            <div class="dropdown-option" data-value="true" onclick="selectOption(this); saveGucheField('pos_end', true)">后缀（车牌在群名后）</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">冷却时间（秒）</label>
+                                    <input type="number" class="form-input" id="cfg-cooldown-input" min="0" step="0.1">
+                                </div>
+                                <div class="mt-16">
+                                    <button type="submit" class="btn btn-primary">保存</button>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">OneBot 连接配置</div>
+                            <form id="form-onebot">
+                                <div class="form-group">
+                                    <label class="form-label">监听地址</label>
+                                    <input type="text" class="form-input" id="cfg-host" placeholder="127.0.0.1">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">监听端口</label>
+                                    <input type="number" class="form-input" id="cfg-port" min="1" max="65535">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">访问令牌（可选）</label>
+                                    <input type="text" class="form-input" id="cfg-token" placeholder="留空表示不需要认证">
+                                </div>
+                                <div class="mt-16">
+                                    <button type="submit" class="btn btn-primary">保存</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="grid-2col mt-16">
+                        <div class="card">
+                            <div class="card-header">自定义指令</div>
+                            <form id="form-commands">
+                                <div class="form-group">
+                                    <label class="form-label">开启指令</label>
+                                    <input type="text" class="form-input" id="cmd-enable">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">关闭指令</label>
+                                    <input type="text" class="form-input" id="cmd-disable">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">帮助指令</label>
+                                    <input type="text" class="form-input" id="cmd-help">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">模式指令</label>
+                                    <input type="text" class="form-input" id="cmd-mode">
+                                </div>
+                                <div style="display: flex; gap: 8px; margin-top: 16px;">
+                                    <button type="submit" class="btn btn-primary">保存</button>
+                                    <button type="button" class="btn btn-secondary" onclick="resetCommands()">恢复默认</button>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">高级配置</div>
+                            <form id="form-advanced">
+                                <div class="form-group">
+                                    <label class="form-label">固车助手管理员</label>
+                                    <div class="text-muted mb-8">留空表示所有人都有权限使用指令</div>
+                                    <div id="admin-users-list" class="mb-8"></div>
+                                    <div class="flex-row">
+                                        <input type="number" class="form-input" id="cfg-admin-new" placeholder="输入管理员ID">
+                                        <button type="button" class="btn btn-primary" onclick="addAdminUser()">添加</button>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">每群最大记录数</label>
+                                    <input type="number" class="form-input" id="cfg-max-records" min="1" max="10000">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">管理界面端口</label>
+                                    <input type="number" class="form-input" id="cfg-webui-port" min="1" max="65535">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">日志缓冲区大小</label>
+                                    <input type="number" class="form-input" id="cfg-log-buffer-size" min="64" max="65536">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">消息队列大小</label>
+                                    <input type="number" class="form-input" id="cfg-message-queue-size" min="64" max="65536">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">连接池大小</label>
+                                    <input type="number" class="form-input" id="cfg-connection-pool-size" min="1" max="100">
+                                </div>
+                                <div class="mt-16">
+                                    <button type="submit" class="btn btn-primary">保存其他配置</button>
+                                </div>
+                            </form>
+                            <div class="section-sep">
+                                <button class="btn btn-secondary w-full" onclick="resetConfig()">重置所有配置</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 统计详情页 -->
+                <div id="page-stats" class="page">
+                    <div class="grid-2col mb-16">
+                        <div class="card">
+                            <div class="card-header">筛选条件</div>
+                            <div class="form-group">
+                                <label class="form-label">群组</label>
+                                <div class="dropdown" id="dd-filter-group" data-value="">
+                                    <div class="dropdown-trigger" onclick="toggleDropdown(this)">所有群组</div>
+                                    <div class="dropdown-menu" id="filter-group-menu">
+                                        <div class="dropdown-option selected" data-value="" onclick="selectOption(this)">所有群组</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">开始日期</label>
+                                <input type="date" class="form-input" id="filter-start">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">结束日期</label>
+                                <input type="date" class="form-input" id="filter-end">
+                            </div>
+                            <div class="mt-16 flex-row">
+                                <button class="btn btn-primary flex-1" onclick="loadStats()">查询</button>
+                                <button class="btn btn-danger flex-1" onclick="deleteStatsInRange()">删除筛选范围</button>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">统计概览</div>
+                            <ul class="list">
+                                <li class="list-item"><span class="list-label">今日改名</span><span class="list-value" id="stats-today">0 次</span></li>
+                                <li class="list-item"><span class="list-label">总改名次数</span><span class="list-value" id="stats-total">0 次</span></li>
+                                <li class="list-item"><span class="list-label">筛选结果</span><span class="list-value" id="stats-filtered">-</span></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">群组改名记录</div>
+                        <table class="table">
+                            <thead>
+                                <tr><th>群组ID</th><th>改名次数</th><th>今日改名</th><th>最后改名</th><th>操作</th></tr>
+                            </thead>
+                            <tbody id="stats-table">
+                                <tr><td colspan="5" class="empty-state">暂无数据</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="card" id="detail-records-card" style="display: none;">
+                        <div class="card-header">详细改名记录 - <span id="detail-group-id"></span></div>
+                        <table class="record-table">
+                            <thead>
+                                <tr><th>时间</th><th>旧群名</th><th>新车牌</th><th>新群名</th><th>操作人</th></tr>
+                            </thead>
+                            <tbody id="detail-records-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 实时日志页 -->
+                <div id="page-logs" class="page">
+                    <div class="card">
+                        <div class="card-header">实时日志流</div>
+                        <div class="log-container" id="log-container"></div>
+                        <div class="flex-row" style="margin-top: 12px;">
+                            <button class="btn btn-secondary" onclick="clearLogs()">清空</button>
+                            <button class="btn btn-primary" onclick="toggleAutoScroll()"><span id="scroll-btn">自动滚动: 开</span></button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 帮助信息页 -->
+                <div id="page-help" class="page">
+                    <div class="card">
+                        <div class="card-header">使用帮助</div>
+                        <table class="help-table">
+                            <tr><td class="help-cmd" id="help-cmd-enable">/开启固车拾取</td><td>启用本群自动改名功能（管理员专用）</td></tr>
+                            <tr><td class="help-cmd" id="help-cmd-disable">/关闭固车拾取</td><td>关闭本群自动改名功能（管理员专用）</td></tr>
+                            <tr><td class="help-cmd" id="help-cmd-mode">/固车模式</td><td>查看当前模式设置</td></tr>
+                            <tr><td class="help-cmd" id="help-cmd-help">/固车拾取 使用方法</td><td>显示本帮助</td></tr>
+                            <tr><td class="help-cmd">发送5位数字</td><td>自动将车牌添加到群名</td></tr>
+                        </table>
+                        <div class="mt-16">
+                            <div class="card-header">模式设置示例</div>
+                            <table class="help-table">
+                                <tr><td class="help-cmd" id="help-cmd-mode-prefix">/固车模式 前缀</td><td>车牌放在群名前面</td></tr>
+                                <tr><td class="help-cmd" id="help-cmd-mode-suffix">/固车模式 后缀</td><td>车牌放在群名后面</td></tr>
+                                <tr><td class="help-cmd" id="help-cmd-mode-strict">/固车模式 严格</td><td>只识别纯5位数字</td></tr>
+                                <tr><td class="help-cmd" id="help-cmd-mode-fuzzy">/固车模式 宽松</td><td>消息开头提取5位数字</td></tr>
+                                <tr><td class="help-cmd" id="help-cmd-mode-combo">/固车模式 前缀 严格</td><td>同时设置两个参数</td></tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 可拖动引导浮窗 -->
+    <div class="guide-float" id="guide-float">
+        <div class="guide-header" id="guide-drag-handle">
+            <h3>首次使用指南</h3>
+            <button class="guide-close" onclick="toggleGuide()">
+                <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+            </button>
+        </div>
+        <div class="guide-body">
+            <div class="guide-step">
+                <div class="guide-step-title"><span class="guide-step-num">1</span>让 OneBot 连接到本程序</div>
+                <div class="guide-step-desc">
+                    打开你的 OneBot V11 客户端，在「网络配置」中新建一条「WebSocket 客户端」：
+                    <ol style="margin: 8px 0; padding-left: 20px; font-size: 13px; color: var(--text-secondary);">
+                        <li>点击启用，名称随意填</li>
+                        <li>URL 填入下方地址</li>
+                        <li>消息格式选择 <strong>Array</strong></li>
+                        <li>Token 选填，如果填了则两边必须一致</li>
+                    </ol>
+                    <div class="guide-code" id="guide-ws-url">加载中...</div>
+                    保存后在 OneBot 或本程序的日志中查看是否连接成功。
+                </div>
+            </div>
+            <div class="guide-step">
+                <div class="guide-step-title"><span class="guide-step-num">2</span>开启群聊功能</div>
+                <div class="guide-step-desc">
+                    进入你想使用的群聊，发送：
+                    <div class="guide-code" id="guide-cmd-enable">/开启固车拾取</div>
+                    也可以在左边「群组管理」里手动输入群号添加。
+                </div>
+            </div>
+            <div class="guide-step">
+                <div class="guide-step-title"><span class="guide-step-num">3</span>试试看</div>
+                <div class="guide-step-desc">
+                    在群里发一条 <code>12345</code>（纯5位数字），机器人会自动把群名改成「xxx 12345」的格式。搞定！
+                </div>
+            </div>
+            <div class="guide-step">
+                <div class="guide-step-title"><span class="guide-step-num">4</span>进阶：调整设置</div>
+                <div class="guide-step-desc">
+                    左边「配置编辑」页面可以调整：
+                    <ul style="margin: 6px 0; padding-left: 20px; font-size: 13px; color: var(--text-secondary);">
+                        <li><strong>匹配模式</strong>：严格（只认纯5位数字）或宽松（数字后面有别的内容也行）</li>
+                        <li><strong>车牌位置</strong>：前缀（数字放群名前面）或后缀（放后面）</li>
+                        <li><strong>监听端口</strong>：改了端口要重启 OneBot 才能连上</li>
+                        <li><strong>管理员</strong>：添加固车助手管理员后只有这些人能用指令</li>
+                    </ul>
+                    也可以在群里用 <code id="guide-cmd-mode">/固车模式</code> 来切换模式。
+                </div>
+            </div>
+            <div class="guide-step">
+                <div class="guide-step-title"><span class="guide-step-num">5</span>关闭功能</div>
+                <div class="guide-step-desc">
+                    在群里发 <code id="guide-cmd-disable">/关闭固车拾取</code>，或者去左边「群组管理」删除对应群号。
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        let autoScroll = true;
+        let ws = null;
+        let logEntries = [];
+        let config = null;
+        let allGroups = [];
+        let refreshTimer = null;
+        let onebotHost = '127.0.0.1';
+        let onebotPort = 8901;
+
+        const API = window.location.origin + '/api';
+        const $ = id => document.getElementById(id);
+        function escapeHtml(s) {
+            return String(s ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+        async function api(path, opts) {
+            const res = await fetch(API + path, opts);
+            if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+            const text = await res.text();
+            return text ? JSON.parse(text) : {};
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadAll();
+            connectWs();
+            setupForms();
+            initGuideDrag();
+            
+            if (!localStorage.getItem('guide-shown')) {
+                $('guide-float').classList.add('show');
+                localStorage.setItem('guide-shown', 'true');
+            }
+        });
+
+        async function loadAll() {
+            await Promise.all([loadStatus(), loadConfig(), loadGroups(), loadStats(), loadLogs()]);
+        }
+
+        function refreshAll() {
+            loadAll();
+            toast('数据已刷新', 'info');
+        }
+
+        function switchPage(page) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            $('page-' + page).classList.add('active');
+            event.currentTarget.classList.add('active');
+
+            const titles = { overview: '概览', groups: '群组管理', config: '配置编辑', stats: '统计详情', logs: '实时日志', help: '帮助信息' };
+            $('page-title').textContent = titles[page] || page;
+
+            if (page === 'config') loadConfig();
+            if (page === 'stats') { loadStats(); loadStatsGroupFilter(); }
+            if (page === 'groups') loadGroups();
+            if (page === 'logs') loadLogs();
+            if (page === 'help') loadCommands();
+        }
+
+        async function loadStatus() {
+            try {
+                const data = await api('/status');
+                $('ws-status').textContent = data.websocket_connected ? '已连接' : '未连接';
+                $('groups-count').textContent = data.enabled_groups_count;
+                $('today-count').textContent = data.today_renames;
+                $('metric-status').textContent = data.websocket_connected ? '正常' : '断开';
+                $('metric-groups').textContent = data.enabled_groups_count;
+                $('metric-today').textContent = data.today_renames;
+                onebotHost = data.onebot_host || '127.0.0.1';
+                onebotPort = data.onebot_port || 8901;
+                const wsUrl = `ws://${onebotHost}:${onebotPort}/ws`;
+                $('ws-url').textContent = wsUrl;
+                $('guide-ws-url').textContent = wsUrl;
+            } catch (e) {
+                console.error('Error loading status:', e);
+            }
+        }
+
+        async function loadConfig() {
+            try {
+                const data = await api('/config');
+                config = data.config;
+
+                $('cfg-mode').textContent = config.guche.fuzzy ? '宽松' : '严格';
+                $('cfg-pos').textContent = config.guche.pos_end ? '后缀' : '前缀';
+                $('cfg-cooldown').textContent = config.guche.cooldown_seconds + '秒';
+
+                setDropdownValue('dd-match-mode', String(!!config.guche.fuzzy));
+                setDropdownValue('dd-group-pos', String(!!config.guche.pos_end));
+                $('cfg-cooldown-input').value = config.guche.cooldown_seconds;
+                
+                $('cfg-host').value = config.onebot.host;
+                $('cfg-port').value = config.onebot.port;
+                $('cfg-token').value = config.onebot.token || '';
+                
+                $('cfg-webui-port').value = config.webui.port;
+                $('cfg-max-records').value = config.stats.max_records_per_group;
+                
+                // 加载缓冲区配置
+                const buffers = config.buffers || {};
+                $('cfg-log-buffer-size').value = buffers.log_buffer_size || 1024;
+                $('cfg-message-queue-size').value = buffers.message_queue_size || 512;
+                $('cfg-connection-pool-size').value = buffers.connection_pool_size || 10;
+                
+                renderAdminUsers();
+                
+                // 更新全局设置显示
+                const globalSettingsDisplay = document.getElementById('global-settings-display');
+                if (globalSettingsDisplay) {
+                    const posText = config.guche.pos_end ? '后缀' : '前缀';
+                    const modeText = config.guche.fuzzy ? '宽松' : '严格';
+                    globalSettingsDisplay.innerHTML = `总设置: ${posText} + ${modeText} <span style="font-size: 12px; color: #999;">(请在"配置编辑"页调整全局设置)</span>`;
+                }
+
+                $('cmd-enable').value = config.commands.guche_enable;
+                $('cmd-disable').value = config.commands.guche_disable;
+                $('cmd-help').value = config.commands.guche_help;
+                $('cmd-mode').value = config.commands.guche_mode;
+            } catch (e) {
+                console.error('Error loading config:', e);
+            }
+        }
+
+        async function loadCommands() {
+            if (!config) await loadConfig();
+            if (config) {
+                const c = config.commands;
+                const prefix = c.guche_mode || '/固车模式';
+                // 帮助页
+                $('help-cmd-enable').textContent = c.guche_enable || '/开启固车拾取';
+                $('help-cmd-disable').textContent = c.guche_disable || '/关闭固车拾取';
+                $('help-cmd-mode').textContent = prefix;
+                $('help-cmd-help').textContent = c.guche_help || '/固车拾取 使用方法';
+                $('help-cmd-mode-prefix').textContent = prefix + ' 前缀';
+                $('help-cmd-mode-suffix').textContent = prefix + ' 后缀';
+                $('help-cmd-mode-strict').textContent = prefix + ' 严格';
+                $('help-cmd-mode-fuzzy').textContent = prefix + ' 宽松';
+                $('help-cmd-mode-combo').textContent = prefix + ' 前缀 严格';
+                // 使用指南
+                $('guide-cmd-enable').textContent = c.guche_enable || '/开启固车拾取';
+                $('guide-cmd-disable').textContent = c.guche_disable || '/关闭固车拾取';
+                $('guide-cmd-mode').textContent = prefix;
+            }
+        }
+
+        function copyWsUrl() {
+            const url = $('ws-url').textContent;
+            navigator.clipboard.writeText(url).then(() => toast('已复制', 'success')).catch(() => {
+                const ta = document.createElement('textarea');
+                ta.value = url;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                toast('已复制', 'success');
+            });
+        }
+
+        async function loadGroups() {
+            try {
+                const groups = await api('/groups');
+                allGroups = groups;
+                renderGroups(groups);
+            } catch (e) {
+                console.error('Error loading groups:', e);
+            }
+        }
+
+        async function syncGroupNames() {
+            try {
+                toast('正在同步群名…', 'info');
+                const data = await api('/groups/sync-names', { method: 'POST' });
+                toast(`已更新 ${data.updated || 0} 个群名`, 'success');
+                loadGroups();
+            } catch (e) {
+                toast('同步失败（需 OneBot 已连接）', 'error');
+            }
+        }
+
+        function renderGroups(groups) {
+            const el = $('group-list');
+
+            if (!groups.length) {
+                el.innerHTML = '<div class="empty-state" style="padding: 20px;">暂无启用群组</div>';
+                return;
+            }
+
+            el.innerHTML = groups.map(g => {
+                const gid = Number(g.group_id);
+                // pos/mode: true/false/null（null=跟全局）
+                const end = g.pos ?? (config && config.guche.pos_end);
+                const fuzzy = g.mode ?? (config && config.guche.fuzzy);
+                const custom = g.pos != null || g.mode != null;
+                const label = g.name ? `${g.group_id}（${g.name}）` : String(g.group_id);
+                return `
+                    <div class="list-item">
+                        <span class="list-value">${escapeHtml(label)}</span>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <div class="dropdown dropdown-sm">
+                                <div class="dropdown-trigger" onclick="toggleDropdown(this)">${end ? '后缀' : '前缀'}</div>
+                                <div class="dropdown-menu">
+                                    <div class="dropdown-option ${!end ? 'selected' : ''}" onclick="selectOption(this); setGroupField(${gid},{pos:false})">前缀</div>
+                                    <div class="dropdown-option ${end ? 'selected' : ''}" onclick="selectOption(this); setGroupField(${gid},{pos:true})">后缀</div>
+                                </div>
+                            </div>
+                            <div class="dropdown dropdown-sm">
+                                <div class="dropdown-trigger" onclick="toggleDropdown(this)">${fuzzy ? '宽松' : '严格'}</div>
+                                <div class="dropdown-menu">
+                                    <div class="dropdown-option ${!fuzzy ? 'selected' : ''}" onclick="selectOption(this); setGroupField(${gid},{mode:false})">严格</div>
+                                    <div class="dropdown-option ${fuzzy ? 'selected' : ''}" onclick="selectOption(this); setGroupField(${gid},{mode:true})">宽松</div>
+                                </div>
+                            </div>
+                            ${custom ? `<button class="btn btn-secondary btn-sm" onclick="setGroupField(${gid},{pos:null,mode:null})">恢复默认</button>` : ''}
+                            <button class="btn btn-danger btn-sm" onclick="deleteGroup(${gid})">删除</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function filterGroups() {
+            const keyword = $('group-search').value.trim();
+            if (!keyword) return renderGroups(allGroups);
+            renderGroups(allGroups.filter(g => g.group_id.toString().includes(keyword)));
+        }
+
+        // 只提交 patch 里出现的字段：pos/mode = true/false/null
+        async function setGroupField(groupId, patch) {
+            await api('/groups/' + groupId, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(patch)
+            });
+            toast('已更新', 'success');
+            loadGroups();
+        }
+
+        async function resetAllGroupOverrides() {
+            if (!confirm('确定将所有群组恢复为默认配置？')) return;
+            for (const g of allGroups) {
+                try { await setGroupField(g.group_id, { pos: null, mode: null }); } catch (_) {}
+            }
+            toast('已全部恢复默认', 'success');
+            loadGroups();
+        }
+
+        async function addGroup() {
+            const id = $('new-group-id').value;
+            if (!id) return toast('请输入群组ID', 'error');
+            try {
+                await api('/groups', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(parseInt(id)) });
+                toast('添加成功', 'success');
+                $('new-group-id').value = '';
+                loadGroups();
+                loadStatus();
+            } catch (e) { toast('添加失败', 'error'); }
+        }
+
+        async function deleteGroup(id) {
+            if (!confirm(`确定删除群组 ${id}？`)) return;
+            try {
+                await api('/groups/' + id, { method: 'DELETE' });
+                toast('删除成功', 'success');
+                loadGroups();
+                loadStatus();
+            } catch (e) { toast('删除失败', 'error'); }
+        }
+
+        // 管理员管理
+        function renderAdminUsers() {
+            const el = $('admin-users-list');
+            const users = config ? (config.admin_users || []) : [];
+            
+            if (!users.length) {
+                el.innerHTML = '<div class="empty-state text-muted" style="padding: 8px 0;">暂无管理员（所有人都有权限）</div>';
+                return;
+            }
+            
+            el.innerHTML = users.map(uid => `
+                <div class="list-item" style="padding: 8px 0;">
+                    <span class="list-value">${escapeHtml(uid)}</span>
+                    <button class="btn btn-danger btn-sm" onclick="removeAdminUser(${Number(uid)})">移除</button>
+                </div>
+            `).join('');
+        }
+
+        async function addAdminUser() {
+            const input = $('cfg-admin-new');
+            const uid = parseInt(input.value);
+            if (!uid || isNaN(uid)) return toast('请输入有效管理员ID', 'error');
+            
+            const users = config ? [...(config.admin_users || [])] : [];
+            if (users.includes(uid)) return toast('该管理员已在列表中', 'error');
+            
+            users.push(uid);
+            await saveConfig({ admin_users: users });
+            input.value = '';
+            renderAdminUsers();
+        }
+
+        async function removeAdminUser(uid) {
+            if (!confirm(`确定移除管理员 ${uid}？`)) return;
+            const users = (config.admin_users || []).filter(u => u !== uid);
+            await saveConfig({ admin_users: users });
+            renderAdminUsers();
+        }
+
+        async function loadStatsGroupFilter() {
+            try {
+                const data = await api('/stats');
+                const groups = data.groups || [];
+                const currentValue = getDropdownValue('dd-filter-group');
+                
+                const menu = $('filter-group-menu');
+                menu.innerHTML = '<div class="dropdown-option selected" data-value="" onclick="selectOption(this)">所有群组</div>';
+                groups.forEach(g => {
+                    const opt = document.createElement('div');
+                    opt.className = 'dropdown-option';
+                    opt.setAttribute('data-value', g.group_id);
+                    opt.textContent = `${g.group_id} (${g.rename_count}次)`;
+                    opt.onclick = function() { selectOption(this); loadStats(); };
+                    menu.appendChild(opt);
+                });
+                
+                if (currentValue) setDropdownValue('dd-filter-group', currentValue);
+            } catch (e) {
+                console.error('Error loading stats filter:', e);
+            }
+        }
+
+        async function loadStats() {
+            try {
+                const groupId = getDropdownValue('dd-filter-group');
+                const startDate = $('filter-start')?.value || '';
+                const endDate = $('filter-end')?.value || '';
+                
+                let path = '/stats?';
+                if (groupId) path += 'group_id=' + groupId + '&';
+                if (startDate) path += 'start_date=' + startDate + '&';
+                if (endDate) path += 'end_date=' + endDate + '&';
+
+                const data = await api(path);
+
+                $('stats-today').textContent = data.today_renames + ' 次';
+                $('stats-total').textContent = data.total_renames + ' 次';
+                $('stats-filtered').textContent = data.range_renames + ' 次';
+
+                const tbody = $('stats-table');
+                const groups = data.groups || [];
+
+                if (!groups.length) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="empty-state">暂无数据</td></tr>';
+                    $('detail-records-card').style.display = 'none';
+                    return;
+                }
+
+                tbody.innerHTML = groups.map(g => `
+                    <tr>
+                        <td>${escapeHtml(g.group_id)}</td>
+                        <td>${escapeHtml(g.rename_count)} 次</td>
+                        <td>${escapeHtml(g.today_count)} 次</td>
+                        <td>${escapeHtml(g.last_rename || '无')}</td>
+                        <td>
+                            <button class="btn btn-secondary btn-sm" style="margin-right: 4px;" onclick="viewGroupRecords(${Number(g.group_id)})">查看记录</button>
+                            <button class="btn btn-danger btn-sm" onclick="clearGroupStats(${Number(g.group_id)})">清空</button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (e) {
+                console.error('Error loading stats:', e);
+            }
+        }
+
+        async function viewGroupRecords(groupId) {
+            try {
+                const startDate = $('filter-start')?.value || '';
+                const endDate = $('filter-end')?.value || '';
+                
+                let path = '/stats/' + groupId + '?';
+                if (startDate) path += 'start_date=' + startDate + '&';
+                if (endDate) path += 'end_date=' + endDate + '&';
+
+                const data = await api(path);
+                
+                $('detail-group-id').textContent = groupId;
+                $('detail-records-card').style.display = 'block';
+                
+                const tbody = $('detail-records-body');
+                const records = data.records || [];
+                
+                if (!records.length) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="empty-state">暂无记录</td></tr>';
+                    return;
+                }
+                
+                tbody.innerHTML = records.map(r => `
+                    <tr>
+                        <td>${escapeHtml(r.time)}</td>
+                        <td>${escapeHtml(r.old_name)}</td>
+                        <td>${escapeHtml(r.code)}</td>
+                        <td>${escapeHtml(r.new_name)}</td>
+                        <td>${escapeHtml(r.user_id)}</td>
+                    </tr>
+                `).join('');
+            } catch (e) {
+                console.error('Error loading records:', e);
+            }
+        }
+
+        async function clearGroupStats(groupId) {
+            if (!confirm(`确定清空群组 ${groupId} 的所有统计？`)) return;
+            try {
+                await api('/stats/' + groupId, { method: 'DELETE' });
+                toast('已清空', 'success');
+                loadStats();
+                loadStatsGroupFilter();
+            } catch (e) { toast('操作失败', 'error'); }
+        }
+
+        async function deleteStatsInRange() {
+            const groupId = getDropdownValue('dd-filter-group');
+            const startDate = $('filter-start')?.value || '';
+            const endDate = $('filter-end')?.value || '';
+            
+            if (!groupId) {
+                toast('请先选择一个群组', 'error');
+                return;
+            }
+            
+            if (!startDate || !endDate) {
+                toast('请设置开始和结束日期', 'error');
+                return;
+            }
+            
+            if (!confirm(`确定删除群组 ${groupId} 在 ${startDate} 至 ${endDate} 期间的记录？`)) return;
+            
+            try {
+                const data = await api(`/stats/${groupId}/range?start_date=${startDate}&end_date=${endDate}`, { method: 'DELETE' });
+                toast(`已删除 ${data.deleted} 条记录`, 'success');
+                loadStats();
+                loadStatsGroupFilter();
+            } catch (e) { toast('操作失败', 'error'); }
+        }
+
+        async function loadLogs() {
+            try {
+                const data = await api('/logs');
+                logEntries = data.logs || [];
+                renderLogs();
+            } catch (e) {
+                console.error('Error loading logs:', e);
+            }
+        }
+
+        function renderLogs() {
+            const el = $('log-container');
+            el.innerHTML = logEntries.map(e => {
+                const lvl = String(e.level || '').toLowerCase();
+                const cls = lvl === 'info' ? 'log-level-info' : lvl === 'warn' ? 'log-level-warn' : 'log-level-error';
+                return `<div class="log-entry"><span class="log-time">${escapeHtml(e.timestamp)}</span> <span class="${cls}">${escapeHtml(e.level)}</span> [${escapeHtml(e.target)}] ${escapeHtml(e.message)}</div>`;
+            }).join('');
+            if (autoScroll) el.scrollTop = el.scrollHeight;
+        }
+
+        function connectWs() {
+            ws = new WebSocket(`ws://${window.location.host}/api/logs/stream`);
+            ws.onopen = () => console.log('WS connected');
+            ws.onmessage = (e) => {
+                const data = JSON.parse(e.data);
+                if (data.type === 'config_updated') {
+                    // 配置已更新，刷新相关数据
+                    console.log('Config updated, refreshing...');
+                    loadConfig();
+                    loadGroups();
+                    loadStatus();
+                    return;
+                }
+                logEntries.push(data);
+                if (logEntries.length > 1000) logEntries = logEntries.slice(-1000);
+                renderLogs();
+            };
+            ws.onclose = () => setTimeout(connectWs, 5000);
+        }
+
+        function clearLogs() { logEntries = []; renderLogs(); toast('日志已清空', 'info'); }
+        function toggleAutoScroll() { autoScroll = !autoScroll; $('scroll-btn').textContent = `自动滚动: ${autoScroll ? '开' : '关'}`; }
+
+        async function saveGucheField(field, value) {
+            await saveConfig({ guche: { [field]: value } });
+        }
+
+        async function saveConfig(data) {
+            try {
+                await api('/config', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+                toast('保存成功', 'success');
+            } catch (e) { toast('保存失败', 'error'); return; }
+            // 刷新数据（失败不影响保存结果提示）
+            try { await loadConfig(); } catch (_) {}
+            try { await loadStatus(); } catch (_) {}
+            if ($('page-groups') && $('page-groups').classList.contains('active')) {
+                try { await loadGroups(); } catch (_) {}
+            }
+        }
+
+        async function resetConfig() {
+            if (!confirm('确定重置所有配置？这将清除所有自定义设置。')) return;
+            try {
+                await api('/config/reset', { method: 'POST' });
+                toast('已重置', 'success');
+                await loadConfig();
+            } catch (e) { toast('重置失败', 'error'); }
+        }
+
+        async function resetCommands() {
+            if (!confirm('确定恢复默认指令？')) return;
+            await saveConfig({
+                commands: {
+                    guche_enable: '/开启固车拾取',
+                    guche_disable: '/关闭固车拾取',
+                    guche_help: '/固车拾取 使用方法',
+                    guche_mode: '/固车模式'
+                }
+            });
+        }
+
+        // 自定义下拉菜单函数
+        function toggleDropdown(trigger) {
+            const dropdown = trigger.parentElement;
+            const isOpen = dropdown.classList.contains('open');
+            // 关闭所有下拉菜单
+            document.querySelectorAll('.dropdown.open').forEach(d => d.classList.remove('open'));
+            if (!isOpen) {
+                dropdown.classList.add('open');
+            }
+        }
+
+        function selectOption(option) {
+            const dropdown = option.closest('.dropdown');
+            const trigger = dropdown.querySelector('.dropdown-trigger');
+            const value = option.getAttribute('data-value');
+            const text = option.textContent;
+            
+            // 更新显示
+            trigger.textContent = text;
+            dropdown.setAttribute('data-value', value);
+            
+            // 更新选中状态
+            dropdown.querySelectorAll('.dropdown-option').forEach(o => o.classList.remove('selected'));
+            option.classList.add('selected');
+            
+            // 关闭下拉菜单
+            dropdown.classList.remove('open');
+        }
+
+        function getDropdownValue(id) {
+            const dropdown = $(id);
+            return dropdown ? dropdown.getAttribute('data-value') : '';
+        }
+
+        function setDropdownValue(id, value) {
+            const dropdown = $(id);
+            if (!dropdown) return;
+            const option = dropdown.querySelector(`.dropdown-option[data-value="${value}"]`);
+            if (option) {
+                dropdown.setAttribute('data-value', value);
+                dropdown.querySelector('.dropdown-trigger').textContent = option.textContent;
+                dropdown.querySelectorAll('.dropdown-option').forEach(o => o.classList.remove('selected'));
+                option.classList.add('selected');
+            }
+        }
+
+        // 点击外部关闭下拉菜单
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.dropdown')) {
+                document.querySelectorAll('.dropdown.open').forEach(d => d.classList.remove('open'));
+            }
+        });
+
+        function setupForms() {
+            $('form-guche').addEventListener('submit', e => {
+                e.preventDefault();
+                saveConfig({ guche: { cooldown_seconds: parseFloat($('cfg-cooldown-input').value) } });
+            });
+            $('form-onebot').addEventListener('submit', e => {
+                e.preventDefault();
+                saveConfig({ onebot: { host: $('cfg-host').value, port: parseInt($('cfg-port').value), token: $('cfg-token').value || null } });
+            });
+            $('form-commands').addEventListener('submit', e => {
+                e.preventDefault();
+                saveConfig({ commands: { guche_enable: $('cmd-enable').value, guche_disable: $('cmd-disable').value, guche_help: $('cmd-help').value, guche_mode: $('cmd-mode').value } });
+            });
+            $('form-advanced').addEventListener('submit', e => {
+                e.preventDefault();
+                saveConfig({ 
+                    stats: { max_records_per_group: parseInt($('cfg-max-records').value) },
+                    webui: { port: parseInt($('cfg-webui-port').value) },
+                    buffers: {
+                        log_buffer_size: parseInt($('cfg-log-buffer-size').value),
+                        message_queue_size: parseInt($('cfg-message-queue-size').value),
+                        connection_pool_size: parseInt($('cfg-connection-pool-size').value)
+                    }
+                });
+            });
+            $('new-group-id').addEventListener('keypress', e => { if (e.key === 'Enter') addGroup(); });
+            $('cfg-admin-new').addEventListener('keypress', e => { if (e.key === 'Enter') { e.preventDefault(); addAdminUser(); } });
+        }
+
+        function toast(msg, type = 'info') {
+            const el = $('toast');
+            el.textContent = msg;
+            el.className = `toast toast-${type} show`;
+            setTimeout(() => el.classList.remove('show'), 3000);
+        }
+
+        function toggleTheme() {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+        }
+
+        function toggleGuide() {
+            $('guide-float').classList.toggle('show');
+        }
+
+        function initGuideDrag() {
+            const guide = $('guide-float');
+            const handle = $('guide-drag-handle');
+            let isDragging = false;
+            let offsetX, offsetY;
+
+            handle.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                offsetX = e.clientX - guide.getBoundingClientRect().left;
+                offsetY = e.clientY - guide.getBoundingClientRect().top;
+                guide.style.transition = 'none';
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                const x = e.clientX - offsetX;
+                const y = e.clientY - offsetY;
+                guide.style.left = x + 'px';
+                guide.style.top = y + 'px';
+                guide.style.right = 'auto';
+            });
+
+            document.addEventListener('mouseup', () => {
+                isDragging = false;
+                guide.style.transition = '';
+            });
+        }
+    </script>
+</body>
+</html>

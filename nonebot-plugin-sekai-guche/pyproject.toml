@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nonebot-plugin-sekai-guche"
+version = "0.1.0"
+description = "《Project SEKAI》固车群自动拾取车牌改名 NoneBot2 插件"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "AGPL-3.0-or-later" }
+authors = [{ name = "Shinonome-ena" }]
+keywords = ["nonebot", "nonebot-plugin", "onebot", "project-sekai", "guche"]
+dependencies = [
+    "nonebot2>=2.3.0",
+    "nonebot-adapter-onebot>=2.4.0",
+    "nonebot-plugin-localstore>=0.6.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/Shinonome-ena/sekai-room-code-renamer"
+Repository = "https://github.com/Shinonome-ena/sekai-room-code-renamer"
+
+[tool.setuptools.packages.find]
+include = ["nonebot_plugin_sekai_guche*"]
